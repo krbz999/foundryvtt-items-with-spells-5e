@@ -95,6 +95,12 @@ export class ItemsWithSpells5eActor {
     const usesMax = changes.uses?.max;
     if (usesMax) changes.uses.value = dnd5e.utils.simplifyBonus(usesMax, rollData);
 
+    // Adjust item id for consumption.
+    if (changes.consume?.amount) {
+      changes.consume.type = "charges";
+      changes.consume.target = parentItem.id;
+    }
+
     // Create and return spell data.
     const spellData = game.items.fromCompendium(spell);
     return foundry.utils.mergeObject(spellData, {
