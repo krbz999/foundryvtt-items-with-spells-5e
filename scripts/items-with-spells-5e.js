@@ -53,6 +53,7 @@ Hooks.once('init', () => {
 });
 
 Hooks.once("setup", _registerSettings);
+Hooks.once("init", ItemsWithSpells5eActor.init);
 
 ItemsWithSpells5eItemSheet.init();
-ItemsWithSpells5eActor.init();
+
