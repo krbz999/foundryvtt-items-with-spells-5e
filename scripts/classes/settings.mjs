@@ -6,8 +6,10 @@ export const EXCLUDED_TYPES = [
   "subclass",
   "background",
   "race",
+  "lineage",
   "spell",
-  "loot"
+  "loot",
+  "base"
 ];
 
 export function _registerSettings() {

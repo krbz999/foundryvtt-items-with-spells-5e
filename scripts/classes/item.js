@@ -1,5 +1,5 @@
-import { ItemsWithSpells5e } from '../items-with-spells-5e.js';
-import { ItemsWithSpells5eItemSheet } from './item-sheet.js';
+import {ItemsWithSpells5e} from '../items-with-spells-5e.js';
+import {ItemsWithSpells5eItemSheet} from './item-sheet.js';
 
 /**
  * Creates a fake temporary item as filler for when a UUID is unable to resolve an item
@@ -19,7 +19,7 @@ const FakeEmptySpell = (uuid, parent) =>
       },
       _id: uuid.split('.').pop(),
     },
-    { temporary: true, parent },
+    {temporary: true, parent},
   );
 
 /**
@@ -67,10 +67,8 @@ export class ItemsWithSpells5eItem {
    * Update this class's understanding of the item spells
    */
   async refresh() {
-    ItemsWithSpells5e.log(false, 'REFRESHING', this.itemSpellList);
     this._getItemSpellFlagMap();
     await this._getItemSpellItems();
-    ItemsWithSpells5e.log(false, 'REFRESHed');
   }
 
   /**
@@ -78,11 +76,9 @@ export class ItemsWithSpells5eItem {
    * If the uuid points to an item already created on the actor: return that item.
    * Otherwise create a temporary item, apply changes, and return that item's json.
    */
-  async _getChildItem({ uuid, changes = {} }) {
+  async _getChildItem({uuid, changes = {}}) {
     // original could be in a compendium or on an actor
     let original = await fromUuid(uuid);
-
-    ItemsWithSpells5e.log(false, 'original', original);
 
     // return a fake 'empty' item if we could not create a childItem
     if (!original) {
@@ -118,8 +114,6 @@ export class ItemsWithSpells5eItem {
     });
     await childItem.updateSource(update);
 
-    ItemsWithSpells5e.log(false, 'getChildItem', childItem);
-
     return childItem;
   }
 
@@ -131,8 +125,8 @@ export class ItemsWithSpells5eItem {
     const itemMap = new Map();
 
     await Promise.all(
-      this.itemSpellList.map(async ({ uuid, changes }) => {
-        const childItem = await this._getChildItem({ uuid, changes });
+      this.itemSpellList.map(async ({uuid, changes}) => {
+        const childItem = await this._getChildItem({uuid, changes});
 
         if (!childItem) return;
 
@@ -189,8 +183,6 @@ export class ItemsWithSpells5eItem {
 
       const [newItem] = await this.item.actor.createEmbeddedDocuments('Item', [adjustedItemData]);
       uuid = newItem.uuid;
-
-      ItemsWithSpells5e.log(false, 'new item created', newItem);
     }
 
     const itemSpells = [...this.itemSpellList, {uuid}];
@@ -213,7 +205,7 @@ export class ItemsWithSpells5eItem {
    * @param {boolean} [options.alsoDeleteEmbeddedSpell] - Should the spell be deleted also, only for owned items
    * @returns {Item} the updated or deleted spell after having its parent item removed, or null
    */
-  async removeSpellFromItem(itemId, { alsoDeleteEmbeddedSpell } = {}) {
+  async removeSpellFromItem(itemId, {alsoDeleteEmbeddedSpell} = {}) {
     const itemToDelete = this.itemSpellItemMap.get(itemId);
 
     // If owned, we are storing the actual owned spell item's uuid. Else we store the source id.
@@ -224,7 +216,7 @@ export class ItemsWithSpells5eItem {
     this._itemSpellItems?.delete(itemId);
     this._itemSpellFlagMap?.delete(itemId);
 
-    await this.item.setFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.itemSpells, newItemSpells);
+    await this.item.setFlag(ItemsWithSpells5e.MODULE_ID, "item-spells", newItemSpells);
 
     // Nothing more to do for unowned items.
     if (!this.item.isOwned) return;
@@ -241,7 +233,7 @@ export class ItemsWithSpells5eItem {
     }));
 
     if (shouldDeleteSpell) return spellItem.delete();
-    else return spellItem.unsetFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.parentItem);
+    else return spellItem.unsetFlag(ItemsWithSpells5e.MODULE_ID, "parent-item");
   }
 
   /**
@@ -251,32 +243,18 @@ export class ItemsWithSpells5eItem {
    */
   async updateItemSpellOverrides(itemId, overrides) {
     const itemSpellFlagsToUpdate = this.itemSpellFlagMap.get(itemId);
-
     itemSpellFlagsToUpdate.changes = overrides;
-
     this.itemSpellFlagMap.set(itemId, itemSpellFlagsToUpdate);
-
     const newItemSpellsFlagValue = [...this.itemSpellFlagMap.values()];
 
     // this update should not re-render the item sheet because we need to wait until we refresh to do so
-    await this.item.update(
-      {
-        flags: {
-          [ItemsWithSpells5e.MODULE_ID]: {
-            [ItemsWithSpells5e.FLAGS.itemSpells]: newItemSpellsFlagValue,
-          },
-        },
-      },
-      { render: false },
-    );
+    await this.item.update({[`flags.${ItemsWithSpells5e.MODULE_ID}.item-spells`]: newItemSpellsFlagValue}, {render: false});
 
     // update this data manager's understanding of the items it contains
     await this.refresh();
 
     ItemsWithSpells5eItemSheet.instances.forEach((instance) => {
-      if (instance.itemWithSpellsItem === this) {
-        instance._shouldOpenSpellsTab = true;
-      }
+      if (instance.itemWithSpellsItem === this) instance._shouldOpenSpellsTab = true;
     });
 
     // now re-render the item sheets

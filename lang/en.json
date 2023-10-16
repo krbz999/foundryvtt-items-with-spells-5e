@@ -15,7 +15,7 @@
   "IWS.SETTINGS.ITEM_EXCLUSION.TITLE": "Item Type Exclusion Menu",
   "IWS.SETTINGS.SORT_ORDER.HINT": "If checked, spellbook sections added by this module will be put at the bottom of the spellbook tab, rather than the top.",
   "IWS.SETTINGS.SORT_ORDER.NAME": "Spellbook Sort Order",
-  "IWS.SPELL_LEVEL_HINT": "If this spell is to be cast at a specific level, configure the level above.",
+  "IWS.ATTACK_HINT": "If this spell has a flat attack bonus, write it here.",
   "IWS.WARN_ALSO_DELETE": "This will also delete the Spell from the Actor. Are you certain you want to delete the embedded spell?",
   "IWS.WARN_CANNOT_ADDREMOVE": "An Owned Item's spells cannot be added to or removed from. These spells have been added to the Actor's Spellbook Tab.",
   "IWS.WARN_OWNED": "You are editing an owned Item's spells, any changes made here will not be applied to the spells on the owning actor."

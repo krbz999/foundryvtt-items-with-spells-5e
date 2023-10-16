@@ -1,131 +1,57 @@
-import { ItemsWithSpells5e } from '../items-with-spells-5e.js';
-import { ItemsWithSpells5eItem } from './item.js';
+import {ItemsWithSpells5e} from '../items-with-spells-5e.js';
 
 /**
  * A class made to make managing the operations for an Actor.
  */
 export class ItemsWithSpells5eActor {
-  /**
-   * Set up the create Item hook
-   */
+  /* Set up the create/delete Item hooks. */
   static init() {
-    Hooks.on('createItem', this.handleCreateItem);
-    Hooks.on('deleteItem', this.handleDeleteItem);
+    Hooks.on('createItem', ItemsWithSpells5eActor.handleCreateItem);
+    Hooks.on('deleteItem', ItemsWithSpells5eActor.handleDeleteItem);
   }
 
   /**
-   * Add the item created's attached items to the actor.
-   * @param {Item5e} itemDeleted
+   * When an item is deleted from an actor, find any of its child spells and prompt for those to be deleted.
+   * @param {Item5e} itemDeleted            The parent item that was deleted.
+   * @param {object} options                Deletion options.
+   * @param {string} userId                 The id of the user who performed the deletion.
+   * @returns {Promise<Item5e[]|void>}      The deleted spells.
    */
-  static removeChildSpellsFromActor = async (itemDeleted) => {
-    // abort if no item provided or if not an owned item
-    if (!itemDeleted || !itemDeleted.isOwned) {
-      return;
-    }
+  static async handleDeleteItem(itemDeleted, options, userId) {
+    if (userId !== game.user.id) return;
+    if (!(itemDeleted.parent instanceof Actor)) return;
+    if (["group", "vehicle"].includes(itemDeleted.parent.type)) return;
 
-    const itemWithSpellsItem = new ItemsWithSpells5eItem(itemDeleted);
+    const ids = itemDeleted.getFlag(ItemsWithSpells5e.MODULE_ID, "item-spells") ?? [];
+    if (!ids.length) return;
 
-    // do nothing if there are no item spells
-    if (!itemWithSpellsItem.itemSpellList.length) {
-      return;
-    }
+    const spellIds = itemDeleted.actor.items.reduce((acc, item) => {
+      const flag = item.getFlag(ItemsWithSpells5e.MODULE_ID, "parent-item") ?? {};
+      if ([itemDeleted.id, itemDeleted.uuid].includes(flag)) acc.push(item.id);// check uuid, too, for backwards compat.
+      return acc;
+    }, []);
 
-    const actorSpellsFromItem = itemDeleted.actor.items.filter((item) => {
-      const parentItemUuid = item.getFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.parentItem);
-      if (!parentItemUuid) return false;
-
-      return parentItemUuid === itemDeleted.uuid;
+    if (!spellIds.length) return;
+    const confirm = options.itemsWithSpells5e?.alsoDeleteChildSpells ?? await Dialog.confirm({
+      title: game.i18n.localize("IWS.MODULE_NAME"),
+      content: game.i18n.localize("IWS.QUERY_ALSO_DELETE")
     });
-
-    const itemIdsToDelete = actorSpellsFromItem.map((item) => item.id);
-
-    ItemsWithSpells5e.log(false, 'removeChildSpellsFromActor', actorSpellsFromItem, itemIdsToDelete);
-
-    return itemDeleted.parent.deleteEmbeddedDocuments('Item', itemIdsToDelete);
-  };
+    if (confirm) return itemDeleted.actor.deleteEmbeddedDocuments("Item", spellIds);
+  }
 
   /**
-   * Remove spells from flags on the parent actor.
-   *
-   * @param {Item} itemDeleted - Item removed from an actor.
+   * When an item is created on an actor, if it has any spells to add, create those, and save a reference
+   * to their uuids and ids in the parent item within `flags.<module>.item-spells`.
+   * Each added spell also gets `flags.<module>.parent-item` being the parent item's id.
+   * @param {Item5e} itemCreated      The item with spells that was created.
+   * @param {object} options          Creation options.
+   * @param {string} userId           The id of the user creating the item.
+   * @returns {Promise<Item5e>}       The parent item updated with new flag data.
    */
-  static handleDeleteItem = async (itemDeleted, options, userId) => {
-    // do nothing if we are not the one creating the item
-    if (userId !== game.user.id) {
-      return;
-    }
-
-    // do nothing if the item was not created on an actor
-    if (!itemDeleted.parent || !(itemDeleted.parent instanceof Actor)) {
-      return;
-    }
-
-    // do nothing if the item was deleted off a vehicle or group type actor
-    if(["group", "vehicle"].includes(itemDeleted.parent?.type)) return;
-
-    if (!itemDeleted.getFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.itemSpells)?.length) {
-      return;
-    }
-
-    ItemsWithSpells5e.log(false, 'handleDeleteItem', itemDeleted, options);
-
-    const alsoDeleteChildSpells =
-      options?.itemsWithSpells5e?.alsoDeleteChildSpells ??
-      (await Dialog.confirm({
-        title: game.i18n.localize("IWS.MODULE_NAME"),
-        content: game.i18n.localize("IWS.QUERY_ALSO_DELETE"),
-      }));
-
-    if (alsoDeleteChildSpells) {
-      await this.removeChildSpellsFromActor(itemDeleted);
-    }
-  };
-
-  /**
-   * Add the item created's attached items to the actor.
-   * @param {Item5e} itemCreated
-   */
-  static addChildSpellsToActor = async (itemCreated) => {
-    // abort if no item provided or if not an owned item
-    if (!itemCreated || !itemCreated.isOwned) return;
-
-    const itemWithSpellsItem = new ItemsWithSpells5eItem(itemCreated);
-
-    // do nothing if there are no item spells
-    if (!itemWithSpellsItem.itemSpellList.length) return;
-
-    // Construct spell data.
-    const itemSpellData = [...(await itemWithSpellsItem.itemSpellItemMap).values()].map((item) => item.toJSON());
-
-    // Set limited uses value to the maximum for each spell.
-    itemSpellData.forEach(data => {
-      const usesMax = foundry.utils.getProperty(data, "system.uses.max");
-      if(usesMax) foundry.utils.setProperty(data, "system.uses.value", dnd5e.utils.simplifyBonus(usesMax, itemCreated.getRollData()));
-    });
-
-    ItemsWithSpells5e.log(false, 'addChildSpellsToActor', itemSpellData);
-
-    return itemCreated.parent.createEmbeddedDocuments('Item', itemSpellData);
-  };
-
-  /**
-   * Add spells from flags to the parent actor.
-   *
-   * @param {Item} itemCreated - Item on an actor.
-   */
-  static handleCreateItem = async (itemCreated, options, userId) => {
-    // do nothing if we are not the one creating the item
-    if (userId !== game.user.id) {
-      return;
-    }
-
-    // do nothing if the item was not created on an actor
-    if (!itemCreated.parent || !(itemCreated.parent instanceof Actor)) {
-      return;
-    }
-
-    // do nothing if the item was created on a vehicle or group type actor
-    if(["group", "vehicle"].includes(itemCreated.parent?.type)) return;
+  static async handleCreateItem(itemCreated, options, userId) {
+    if (userId !== game.user.id) return;
+    if (!(itemCreated.parent instanceof Actor)) return;
+    if (["group", "vehicle"].includes(itemCreated.parent.type)) return;
 
     // bail out from creating the spells if the parent item is not valid.
     let include = false;
@@ -134,27 +60,52 @@ export class ItemsWithSpells5eActor {
     } catch {}
     if (!include) return;
 
-    ItemsWithSpells5e.log(false, 'handleCreateItem', itemCreated);
+    // Get array of objects with uuids of spells to create.
+    const spellUuids = itemCreated.getFlag(ItemsWithSpells5e.MODULE_ID, "item-spells") ?? [];
+    if (!spellUuids.length) return;
 
-    if (!itemCreated.getFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.itemSpells)?.length) {
-      return;
+    // Create the spells from this item.
+    const spells = await Promise.all(spellUuids.map(d => ItemsWithSpells5eActor._createSpellData(itemCreated, d)));
+    const spellData = spells.filter(s => s);
+    const spellsCreated = await itemCreated.actor.createEmbeddedDocuments("Item", spellData);
+
+    const ids = spellsCreated.map(s => ({uuid: s.uuid, id: s.id}));
+    return itemCreated.setFlag(ItemsWithSpells5e.MODULE_ID, "item-spells", ids);
+  }
+
+  /**
+   * Create the data for a spell with attack bonus, limited uses, references, and overrides.
+   * @param {Item5e} parentItem     The item that has spells.
+   * @param {object} data           Object with uuid and overrides.
+   * @returns {Promise<object>}     The item data for creation of a spell.
+   */
+  static async _createSpellData(parentItem, data) {
+    const spell = await fromUuid(data.uuid);
+    if (!spell) return null;
+
+    // Adjust attack bonus.
+    const changes = data.changes?.system || {};
+    if (("attackBonus" in changes) && (changes.attackBonus !== 0)) {
+      changes.ability = "none";
+      changes.attackBonus = `${changes.attackBonus} - @prof`;
     }
 
-    const createdDocuments = await this.addChildSpellsToActor(itemCreated);
+    // Adjust limited uses.
+    const rollData = parentItem.getRollData({deterministic: true});
+    const usesMax = changes.uses?.max;
+    if (usesMax) changes.uses.value = dnd5e.utils.simplifyBonus(usesMax, rollData);
 
-    const newFlagDataArray = itemCreated
-      .getFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.itemSpells)
-      ?.map((flagData) => {
-        const relevantCreatedDocument = createdDocuments.find(
-          (item) => item.getFlag('core', 'sourceId') === flagData.uuid,
-        );
+    // Adjust item id for consumption.
+    if (changes.consume?.amount) {
+      changes.consume.type = "charges";
+      changes.consume.target = parentItem.id;
+    }
 
-        return {
-          ...flagData,
-          uuid: relevantCreatedDocument?.uuid ?? flagData.uuid,
-        };
-      });
-
-    itemCreated.setFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.itemSpells, newFlagDataArray);
-  };
+    // Create and return spell data.
+    const spellData = game.items.fromCompendium(spell);
+    return foundry.utils.mergeObject(spellData, {
+      "flags.items-with-spells-5e.parent-item": parentItem.id,
+      system: changes
+    });
+  }
 }
