@@ -27,7 +27,7 @@ export class ItemsWithSpells5eActor {
 
     const spellIds = itemDeleted.actor.items.reduce((acc, item) => {
       const flag = item.getFlag(ItemsWithSpells5e.MODULE_ID, "parent-item") ?? {};
-      if([itemDeleted.id, itemDeleted.uuid].includes(flag)) acc.push(item.id);// check uuid, too, for backwards compat.
+      if ([itemDeleted.id, itemDeleted.uuid].includes(flag)) acc.push(item.id);// check uuid, too, for backwards compat.
       return acc;
     }, []);
 
@@ -65,20 +65,41 @@ export class ItemsWithSpells5eActor {
     if (!spellUuids.length) return;
 
     // Create the spells from this item.
-    const rollData = itemCreated.getRollData({deterministic: true});
-    const spells = await Promise.all(spellUuids.map(d => fromUuid(d.uuid)));
-    const spellData = spells.reduce((acc, spell) => {
-      if (!spell) return acc;
-      const data = game.items.fromCompendium(spell);
-      foundry.utils.mergeObject(data, {"flags.items-with-spells-5e.parent-item": itemCreated.id});
-      const usesMax = foundry.utils.getProperty(data, "system.uses.max");
-      if (usesMax) foundry.utils.setProperty(data, "system.uses.value", dnd5e.utils.simplifyBonus(usesMax, rollData));
-      acc.push(data);
-      return acc;
-    }, []);
+    const spells = await Promise.all(spellUuids.map(d => ItemsWithSpells5eActor._createSpellData(itemCreated, d)));
+    const spellData = spells.filter(s => s);
     const spellsCreated = await itemCreated.actor.createEmbeddedDocuments("Item", spellData);
 
     const ids = spellsCreated.map(s => ({uuid: s.uuid, id: s.id}));
     return itemCreated.setFlag(ItemsWithSpells5e.MODULE_ID, "item-spells", ids);
+  }
+
+  /**
+   * Create the data for a spell with attack bonus, limited uses, references, and overrides.
+   * @param {Item5e} parentItem     The item that has spells.
+   * @param {object} data           Object with uuid and overrides.
+   * @returns {Promise<object>}     The item data for creation of a spell.
+   */
+  static async _createSpellData(parentItem, data) {
+    const spell = await fromUuid(data.uuid);
+    if (!spell) return null;
+
+    // Adjust attack bonus.
+    const changes = data.changes?.system || {};
+    if (("attackBonus" in changes) && (changes.attackBonus !== 0)) {
+      changes.ability = "none";
+      changes.attackBonus = `${changes.attackBonus} - @prof`;
+    }
+
+    // Adjust limited uses.
+    const rollData = parentItem.getRollData({deterministic: true});
+    const usesMax = changes.uses?.max;
+    if (usesMax) changes.uses.value = dnd5e.utils.simplifyBonus(usesMax, rollData);
+
+    // Create and return spell data.
+    const spellData = game.items.fromCompendium(spell);
+    return foundry.utils.mergeObject(spellData, {
+      "flags.items-with-spells-5e.parent-item": parentItem.id,
+      system: changes
+    });
   }
 }
