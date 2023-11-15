@@ -1,3 +1,9 @@
+.dnd5e.sheet.item.iws {
+  min-height: auto;
+}
+.dnd5e.sheet.item.iws .form-group label:first-child {
+  flex: 1;
+}
 .items-with-spells-tab {
   display: flex;
   flex-direction: column;

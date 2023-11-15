@@ -182,9 +182,9 @@ export class ItemsWithSpells5eItem {
       }
 
       const adjustedItemData = foundry.utils.mergeObject(fullItemData.toObject(), {
-        ['flags.core.sourceId']: uuid, // set the sourceId as the original spell
+        "flags.core.sourceId": uuid, // set the sourceId as the original spell
         [`flags.${ItemsWithSpells5e.MODULE_ID}.${ItemsWithSpells5e.FLAGS.parentItem}`]: this.item.uuid,
-        ['system.preparation.mode']: 'atwill',
+        "system.preparation.mode": "atwill"
       });
 
       const [newItem] = await this.item.actor.createEmbeddedDocuments('Item', [adjustedItemData]);

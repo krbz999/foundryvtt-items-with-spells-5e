@@ -61,7 +61,12 @@
         <select name="overrides.system.consume.target" disabled>
           <option value="{{parentItem.id}}" selected>{{parentItem.name}}</option>
         </select>
-        <input type="text" name="overrides.system.consume.amount" value="{{overrides.system.consume.amount}}" data-dtype="Number">
+        <input type="text" name="overrides.system.consume.amount" value="{{overrides.system.consume.amount}}" data-dtype="Number" {{#unless parentItem.hasUses}}disabled{{/unless}}>
+        {{#if (gt spell.system.level 0)}}
+        <label class="checkbox" data-tooltip="DND5E.ConsumeScalingTooltip">
+          <input type="checkbox" name="overrides.system.consume.scale" {{checked overrides.system.consume.scale}}> {{localize "DND5E.ConsumeScaling"}}
+        </label>
+        {{/if}}
       </div>
     </div>
     <p class="notes">{{localize "IWS.CHARGES_HINT"}}</p>

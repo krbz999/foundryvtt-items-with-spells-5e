@@ -2,8 +2,7 @@
   "id": "items-with-spells-5e",
   "title": "Items with Spells DnD5e",
   "description": "A module that allows spells to be attached to Items, Features, etc.",
-  "version": "1.2.0",
-  "manifestPlusVersion": "1.1.0",
+  "version": "11.1.0",
   "authors": [
     {
       "name": "Andrew Krigline",
@@ -14,7 +13,7 @@
     },
     {
       "name": "Zhell",
-      "discord": "Zhell#9201",
+      "discord": "zhell9201",
       "url": "https://github.com/krbz999",
       "patreon": "https://www.patreon.com/zhell",
       "ko-fi": "https://ko-fi.com/zhell"
@@ -48,8 +47,8 @@
         "id": "dnd5e",
         "type": "system",
         "compatibility": {
-          "minimum": "2.3.0",
-          "maximum": "2.3.9"
+          "minimum": "2.4.0",
+          "maximum": "2.4.9"
         }
       }
     ],
@@ -64,7 +63,7 @@
   },
   "bugs": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/issues",
   "changelog": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases",
-  "download": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases/latest/download/module.zip",
+  "download": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases/download/v11.1.0/module.zip",
   "manifest": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases/latest/download/module.json",
   "readme": "https://raw.githubusercontent.com/krbz999/foundryvtt-items-with-spells-5e/main/README.md",
   "url": "https://github.com/krbz999/foundryvtt-items-with-spells-5e",

@@ -149,12 +149,11 @@ export class ItemsWithSpells5eActor {
           (item) => item.getFlag('core', 'sourceId') === flagData.uuid,
         );
 
-        return {
-          ...flagData,
-          uuid: relevantCreatedDocument?.uuid ?? flagData.uuid,
-        };
-      });
-
-    itemCreated.setFlag(ItemsWithSpells5e.MODULE_ID, ItemsWithSpells5e.FLAGS.itemSpells, newFlagDataArray);
-  };
+    // Create and return spell data.
+    const spellData = game.items.fromCompendium(spell);
+    return foundry.utils.mergeObject(spellData, {
+      "flags.items-with-spells-5e.parent-item": parentItem.id,
+      system: {...changes, "preparation.mode": "atwill"}
+    });
+  }
 }

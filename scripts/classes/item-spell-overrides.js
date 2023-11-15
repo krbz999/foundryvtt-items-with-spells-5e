@@ -53,10 +53,12 @@ export class ItemsWithSpells5eItemSpellOverrides extends FormApplication {
         spellLevels: CONFIG.DND5E.spellLevels,
       },
       isFlatDC: this.object?.system?.save?.scaling === 'flat',
+      spell: this.itemSpellItem,
       parentItem: {
         id: this.item.id,
         name: this.item.name,
         isOwned: this.item.isOwned,
+        hasUses: this.item.hasLimitedUses && (uses.per in CONFIG.DND5E.limitedUsePeriods) && (uses.max > 0)
       },
     };
 
