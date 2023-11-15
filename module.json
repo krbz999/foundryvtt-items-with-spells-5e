@@ -20,13 +20,14 @@
     }
   ],
   "esmodules": [
-    "/scripts/items-with-spells-5e.js"
+    "scripts/items-with-spells-5e.js"
   ],
   "styles": [
-    "/styles/items-with-spells-5e.css"
+    "styles/items-with-spells-5e.css"
   ],
   "compatibility": {
     "minimum": 11,
+    "maximum": 11,
     "verified": 11
   },
   "languages": [
@@ -68,7 +69,6 @@
   "readme": "https://raw.githubusercontent.com/krbz999/foundryvtt-items-with-spells-5e/main/README.md",
   "url": "https://github.com/krbz999/foundryvtt-items-with-spells-5e",
   "flags": {
-    "allowBugReporter": true,
     "fvttdevleague": {
       "package-jam": 2022
     }
