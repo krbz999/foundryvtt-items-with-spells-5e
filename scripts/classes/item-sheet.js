@@ -9,7 +9,7 @@ export class ItemsWithSpells5eItemSheet {
   /** A boolean to set when we are causing an item update we know should re-open to this tab */
   _shouldOpenSpellsTab = false;
 
-  constructor(app, html) {
+  constructor(app, [html]) {
     this.app = app;
     this.item = app.item;
     this.sheetHtml = html;
@@ -130,37 +130,41 @@ export class ItemsWithSpells5eItemSheet {
    */
   renderLite() {
     // Update the nav menu
-    const spellsTabButton = $('<a class="item" data-tab="spells">' + game.i18n.localize(`ITEM.TypeSpellPl`) + '</a>');
-    const tabs = this.sheetHtml.find('.tabs[data-group="primary"]');
+    const div = document.createElement("DIV");
+    div.innerHTML = `<a class="item" data-tab="spells">${game.i18n.localize("TYPES.Item.spellPl")}</a>`;
+    const tabs = this.sheetHtml.querySelector(".tabs[data-group=primary]");
     if (!tabs) return;
-    tabs.append(spellsTabButton);
+    tabs.appendChild(div.firstElementChild);
 
     // Create the tab
-    const sheetBody = this.sheetHtml.find('.sheet-body');
-    const spellsTab = $(`<div class="tab spells flexcol" data-group="primary" data-tab="spells"></div>`);
-    sheetBody.append(spellsTab);
-    this.renderHeavy(spellsTab);
+    const sheetBody = this.sheetHtml.querySelector(".sheet-body");
+    div.innerHTML = "<div class='tab spells flexcol' data-group='primary' data-tab='spells'></div>";
+    const c = div.firstElementChild;
+    sheetBody.appendChild(c);
+    this.renderHeavy(c);
   }
 
   /**
-   * Heavy lifting part of the spells tab rendering which involves getting the spells and painting them
+   * Heavy lifting part of the spells tab rendering which involves getting the spells and painting them.
+   * @param {HTMLElement} spellsTab
    */
   async renderHeavy(spellsTab) {
-    // await this.itemWithSpellsItem.refresh();
     // Add the list to the tab
-    const spellsTabHtml = $(await this._renderSpellsList());
-    spellsTab.append(spellsTabHtml);
+    const div = document.createElement("DIV");
+    div.innerHTML = await this._renderSpellsList();
+    const c = div.firstElementChild;
+    spellsTab.appendChild(c);
 
     // Activate Listeners for this ui.
-    spellsTabHtml.on('click', '.item-name', this._handleItemClick.bind(this));
-    spellsTabHtml.on('click', '.item-delete', this._handleItemDeleteClick.bind(this));
-    spellsTabHtml.on('click', '.item-destroy', this._handleItemDestroyClick.bind(this));
-    spellsTabHtml.on('click', '.configure-overrides', this._handleItemEditClick.bind(this));
+    c.querySelectorAll(".item-name").forEach(n => n.addEventListener("click", this._handleItemClick.bind(this)));
+    c.querySelectorAll(".item-delete").forEach(n => n.addEventListener("click", this._handleItemDeleteClick.bind(this)));
+    c.querySelectorAll(".item-destroy").forEach(n => n.addEventListener("click", this._handleItemDestroyClick.bind(this)));
+    c.querySelectorAll(".configure-overrides").forEach(n => n.addEventListener("click", this._handleItemEditClick.bind(this)));
 
     // Register a DragDrop handler for adding new spells to this item
     const dragDrop = {
-      dragSelector: '.item',
-      dropSelector: '.items-with-spells-tab',
+      dragSelector: ".item",
+      dropSelector: ".items-with-spells-tab",
       permissions: {drop: () => this.app.isEditable && !this.item.isOwned},
       callbacks: {drop: this._dragEnd},
     };
