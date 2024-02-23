@@ -2,7 +2,7 @@
   "id": "items-with-spells-5e",
   "title": "Items with Spells DnD5e",
   "description": "A module that allows spells to be attached to Items, Features, etc.",
-  "version": "11.1.0",
+  "version": "AUTOMATIC",
   "authors": [
     {
       "name": "Andrew Krigline",
@@ -64,7 +64,7 @@
   },
   "bugs": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/issues",
   "changelog": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases",
-  "download": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases/download/v11.1.0/module.zip",
+  "download": "AUTOMATIC",
   "manifest": "https://github.com/krbz999/foundryvtt-items-with-spells-5e/releases/latest/download/module.json",
   "readme": "https://raw.githubusercontent.com/krbz999/foundryvtt-items-with-spells-5e/main/README.md",
   "url": "https://github.com/krbz999/foundryvtt-items-with-spells-5e",

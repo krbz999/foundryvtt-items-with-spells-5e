@@ -85,9 +85,9 @@ export class ItemsWithSpells5eActor {
 
     // Adjust attack bonus.
     const changes = data.changes?.system || {};
-    if (("attackBonus" in changes) && (changes.attackBonus !== 0)) {
+    if (changes.attackBonus) {
       changes.ability = "none";
-      changes.attackBonus = `${changes.attackBonus} - @prof`;
+      changes.attackBonus = `${changes.attackBonus || 0} - @prof`;
     }
 
     // Adjust limited uses.
